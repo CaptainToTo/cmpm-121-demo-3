@@ -29,7 +29,8 @@ leaflet
   .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution:
-      "&copy; <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap</a>",
+      // eslint-disable-next-line @typescript-eslint/quotes
+      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   })
   .addTo(map);
 
@@ -43,14 +44,8 @@ statusPanel.innerHTML = "No points yet...";
 
 function makePit(i: number, j: number) {
   const bounds = leaflet.latLngBounds([
-    [
-      MERRILL_CLASSROOM.lat + i * TILE_DEGREES,
-      MERRILL_CLASSROOM.lng + j * TILE_DEGREES,
-    ],
-    [
-      MERRILL_CLASSROOM.lat + (i + 1) * TILE_DEGREES,
-      MERRILL_CLASSROOM.lng + (j + 1) * TILE_DEGREES,
-    ],
+    [i * TILE_DEGREES, j * TILE_DEGREES],
+    [(i + 1) * TILE_DEGREES, (j + 1) * TILE_DEGREES],
   ]);
 
   const pit = leaflet.rectangle(bounds) as leaflet.Layer;
@@ -85,8 +80,22 @@ function makePit(i: number, j: number) {
   pit.addTo(map);
 }
 
-for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
-  for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
+const latMin: number = Math.floor(
+  MERRILL_CLASSROOM.lat / TILE_DEGREES - NEIGHBORHOOD_SIZE,
+);
+const latMax: number = Math.floor(
+  MERRILL_CLASSROOM.lat / TILE_DEGREES + NEIGHBORHOOD_SIZE,
+);
+
+const lngMin: number = Math.floor(
+  MERRILL_CLASSROOM.lng / TILE_DEGREES - NEIGHBORHOOD_SIZE,
+);
+const lngMax: number = Math.floor(
+  MERRILL_CLASSROOM.lng / TILE_DEGREES + NEIGHBORHOOD_SIZE,
+);
+
+for (let i = latMin; i < latMax; i++) {
+  for (let j = lngMin; j < lngMax; j++) {
     if (luck([i, j].toString()) < PIT_SPAWN_PROBABILITY) {
       makePit(i, j);
     }
