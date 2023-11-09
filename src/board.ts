@@ -9,6 +9,7 @@ export interface Cell {
   readonly i: number;
   readonly j: number;
   pit: GeoCoin[] | null;
+  popup: HTMLDivElement | null;
 }
 
 export class Board {
@@ -24,8 +25,11 @@ export class Board {
 
   curCell: Cell | null;
 
+  map: HTMLElement;
+
   constructor(tileWidth: number, tileVisibilityRadius: number) {
     Board.instance = this;
+    this.map = document.querySelector<HTMLElement>("#map")!;
     this.tileWidth = tileWidth;
     this.tileVisibilityRadius = tileVisibilityRadius;
     this.knownCells = new Map<string, Cell>();
@@ -35,7 +39,7 @@ export class Board {
   private getCanonicalCell(i: number, j: number): Cell {
     const key = [i, j].toString();
 
-    if (!(key in this.knownCells)) {
+    if (!this.knownCells.has(key)) {
       this.knownCells.set(key, this.buildCell(i, j));
     }
 
@@ -44,14 +48,14 @@ export class Board {
 
   private buildCell(i: number, j: number): Cell {
     if (luck([i, j].toString()) > PIT_SPAWN_PROBABILITY) {
-      return { i: i, j: j, pit: null };
+      return { i: i, j: j, pit: null, popup: null };
     }
     const value = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
     const pit: GeoCoin[] = [];
     for (let g = 0; g < value; g++) {
       pit.push(new GeoCoin(i, j, g));
     }
-    return { i: i, j: j, pit: pit };
+    return { i: i, j: j, pit: pit, popup: null };
   }
 
   getCellForPoint(point: leaflet.LatLng): Cell {
@@ -91,6 +95,8 @@ export class Board {
   }
 
   drawPits(point: leaflet.LatLng, map: leaflet.Map) {
+    this.map.dispatchEvent(new Event("redraw"));
+
     const cells = this.getCellsNearPoint(point);
 
     cells.forEach((cell) => {
@@ -98,11 +104,11 @@ export class Board {
       const pit = leaflet.rectangle(bounds) as leaflet.Layer;
 
       pit.bindPopup(() => {
-        const container = document.createElement("div");
-        container.style.maxHeight = "200px";
-        container.style.overflow = "auto";
+        cell.popup = document.createElement("div");
+        cell.popup.style.maxHeight = "200px";
+        cell.popup.style.overflow = "auto";
 
-        container.innerHTML = `<div>There is a pit here at "${cell.i},${
+        cell.popup.innerHTML = `<div>There is a pit here at "${cell.i},${
           cell.j
         }". It has <span id="value">${
           cell.pit?.length ?? 0
@@ -116,13 +122,13 @@ export class Board {
               Player.getInstance().addCoin(coin);
               cell.pit!.splice(cell.pit!.indexOf(coin), 1);
               button.style.display = "none";
-              container.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${cell.pit!.length}`;
+              cell.popup!.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${cell.pit!.length}`;
             });
-            container.append(button);
+            cell.popup!.append(button);
           });
         }
 
-        return container;
+        return cell.popup;
       });
 
       pit.addEventListener("popupopen", () => {
@@ -133,6 +139,10 @@ export class Board {
         if (Board.getInstance().curCell === cell) {
           Board.getInstance().curCell = null;
         }
+      });
+
+      Board.getInstance().map.addEventListener("redraw", () => {
+        pit?.remove();
       });
 
       pit.addTo(map);

@@ -44,7 +44,21 @@ export class Player {
       button.innerHTML = coin.toString();
       button.addEventListener("click", () => {
         if (Board.getInstance().curCell !== null) {
-          Board.getInstance().curCell!.pit!.push(coin);
+          const curCell = Board.getInstance().curCell!;
+          curCell.pit!.push(coin);
+
+          const newButton = document.createElement("button");
+          newButton.innerHTML = coin.toString();
+          newButton.addEventListener("click", () => {
+            Player.getInstance().addCoin(coin);
+            curCell.pit!.splice(curCell.pit!.indexOf(coin), 1);
+            newButton.style.display = "none";
+            curCell.popup!.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${curCell.pit!.length}`;
+          });
+          curCell.popup!.append(newButton);
+
+          curCell.popup!.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${curCell.pit!.length}`;
+
           this.coins.splice(this.coins.indexOf(coin), 1);
           button.style.display = "none";
         }

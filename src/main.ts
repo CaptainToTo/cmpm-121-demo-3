@@ -39,3 +39,24 @@ const player = new Player(map, MERRILL_CLASSROOM);
 const board = new Board(TILE_DEGREES, NEIGHBORHOOD_SIZE);
 
 board.drawPits(player.position, map);
+
+document.getElementById("north")?.addEventListener("click", () => {
+  player.position.lat += board.tileWidth;
+  player.marker.setLatLng(player.position);
+  board.drawPits(player.position, map);
+});
+document.getElementById("south")?.addEventListener("click", () => {
+  player.position.lat -= board.tileWidth;
+  player.marker.setLatLng(player.position);
+  board.drawPits(player.position, map);
+});
+document.getElementById("east")?.addEventListener("click", () => {
+  player.position.lng += board.tileWidth;
+  player.marker.setLatLng(player.position);
+  board.drawPits(player.position, map);
+});
+document.getElementById("west")?.addEventListener("click", () => {
+  Player.instance.position.lng -= Board.getInstance().tileWidth;
+  Player.instance.marker.setLatLng(Player.instance.position);
+  Board.instance.drawPits(Player.instance.position, map);
+});
