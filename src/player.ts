@@ -1,5 +1,6 @@
 import leaflet from "leaflet";
 import { GeoCoin } from "./coin";
+import { Board } from "./board";
 
 export class Player {
   static instance: Player;
@@ -42,7 +43,11 @@ export class Player {
       const button = document.createElement("button");
       button.innerHTML = coin.toString();
       button.addEventListener("click", () => {
-        console.log(coin.toString());
+        if (Board.getInstance().curCell !== null) {
+          Board.getInstance().curCell!.pit!.push(coin);
+          this.coins.splice(this.coins.indexOf(coin), 1);
+          button.style.display = "none";
+        }
       });
       this.statusPanel.append(button);
     });

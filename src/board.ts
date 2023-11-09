@@ -22,11 +22,14 @@ export class Board {
 
   private readonly knownCells: Map<string, Cell>;
 
+  curCell: Cell | null;
+
   constructor(tileWidth: number, tileVisibilityRadius: number) {
     Board.instance = this;
     this.tileWidth = tileWidth;
     this.tileVisibilityRadius = tileVisibilityRadius;
     this.knownCells = new Map<string, Cell>();
+    this.curCell = null;
   }
 
   private getCanonicalCell(i: number, j: number): Cell {
@@ -120,6 +123,16 @@ export class Board {
         }
 
         return container;
+      });
+
+      pit.addEventListener("popupopen", () => {
+        Board.getInstance().curCell = cell;
+      });
+
+      pit.addEventListener("popupclose", () => {
+        if (Board.getInstance().curCell === cell) {
+          Board.getInstance().curCell = null;
+        }
       });
 
       pit.addTo(map);
