@@ -25,6 +25,8 @@ export class Player {
     this.coins = [];
 
     this.statusPanel = document.querySelector<HTMLDivElement>("#statusPanel")!;
+    this.statusPanel.style.maxHeight = "150px";
+    this.statusPanel.style.overflow = "auto";
     this.updateStatusPanel();
   }
 

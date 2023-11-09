@@ -96,6 +96,8 @@ export class Board {
 
       pit.bindPopup(() => {
         const container = document.createElement("div");
+        container.style.maxHeight = "200px";
+        container.style.overflow = "auto";
 
         container.innerHTML = `<div>There is a pit here at "${cell.i},${
           cell.j
@@ -110,6 +112,7 @@ export class Board {
             button.addEventListener("click", () => {
               Player.getInstance().addCoin(coin);
               cell.pit!.splice(cell.pit!.indexOf(coin), 1);
+              button.style.display = "none";
               container.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${cell.pit!.length}`;
             });
             container.append(button);
