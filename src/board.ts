@@ -1,22 +1,29 @@
 import leaflet from "leaflet";
 import luck from "./luck";
-import { GeoCoin } from "./coin.ts";
+import { GeoCoin } from "./coin";
+import { Player } from "./player";
 
 const PIT_SPAWN_PROBABILITY = 0.1;
 
-interface Cell {
+export interface Cell {
   readonly i: number;
   readonly j: number;
   pit: GeoCoin[] | null;
 }
 
 export class Board {
+  static instance: Board;
+  static getInstance(): Board {
+    return Board.instance;
+  }
+
   readonly tileWidth: number;
   readonly tileVisibilityRadius: number;
 
   private readonly knownCells: Map<string, Cell>;
 
   constructor(tileWidth: number, tileVisibilityRadius: number) {
+    Board.instance = this;
     this.tileWidth = tileWidth;
     this.tileVisibilityRadius = tileVisibilityRadius;
     this.knownCells = new Map<string, Cell>();
@@ -24,7 +31,7 @@ export class Board {
 
   private getCanonicalCell(i: number, j: number): Cell {
     const key = [i, j].toString();
-    
+
     if (!(key in this.knownCells)) {
       this.knownCells.set(key, this.buildCell(i, j));
     }
@@ -47,14 +54,14 @@ export class Board {
   getCellForPoint(point: leaflet.LatLng): Cell {
     return this.getCanonicalCell(
       Math.floor(point.lat / this.tileWidth),
-      Math.floor(point.lng / this.tileWidth),
+      Math.floor(point.lng / this.tileWidth)
     );
   }
 
   getCellBounds(cell: Cell): leaflet.LatLngBounds {
     return leaflet.latLngBounds([
-      [cell.i, cell.j],
-      [cell.i + this.tileWidth, cell.j + this.tileWidth],
+      [cell.i * this.tileWidth, cell.j * this.tileWidth],
+      [(cell.i + 1) * this.tileWidth, (cell.j + 1) * this.tileWidth],
     ]);
   }
 
@@ -70,10 +77,49 @@ export class Board {
 
     for (let i = latMin; i < latMax; i++) {
       for (let j = lngMin; j < lngMax; j++) {
-        resultCells.push(this.getCanonicalCell(i, j));
+        const cell = this.getCanonicalCell(i, j);
+        if (cell.pit !== null) {
+          resultCells.push(this.getCanonicalCell(i, j));
+        }
       }
     }
 
     return resultCells;
+  }
+
+  drawPits(point: leaflet.LatLng, map: leaflet.Map) {
+    const cells = this.getCellsNearPoint(point);
+
+    cells.forEach((cell) => {
+      const bounds = this.getCellBounds(cell);
+      const pit = leaflet.rectangle(bounds) as leaflet.Layer;
+
+      pit.bindPopup(() => {
+        const container = document.createElement("div");
+
+        container.innerHTML = `<div>There is a pit here at "${cell.i},${
+          cell.j
+        }". It has <span id="value">${
+          cell.pit?.length ?? 0
+        }</span> coins.</div>`;
+        
+        if (cell.pit !== null) {
+          cell.pit.forEach((coin) => {
+            const button = document.createElement("button");
+            button.innerHTML = coin.toString();
+            button.addEventListener("click", () => {
+              Player.getInstance().addCoin(coin);
+              cell.pit!.splice(cell.pit!.indexOf(coin), 1);
+              container.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${cell.pit!.length}`;
+            });
+            container.append(button);
+          });
+        }
+
+        return container;
+      });
+
+      pit.addTo(map);
+    });
   }
 }
