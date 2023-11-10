@@ -14,6 +14,9 @@ export class Player {
   coins: GeoCoin[];
   statusPanel: HTMLDivElement;
 
+  path: leaflet.Polyline;
+  history: leaflet.LatLng[];
+
   constructor(map: leaflet.Map, startPos: leaflet.LatLng) {
     Player.instance = this;
     this.map = map;
@@ -36,6 +39,10 @@ export class Player {
     this.statusPanel.style.maxHeight = "150px";
     this.statusPanel.style.overflow = "auto";
     this.updateStatusPanel();
+
+    this.history = [];
+    this.history.push(this.position);
+    this.path = leaflet.polyline(this.history, { color: "red" }).addTo(this.map);
   }
 
   saveCoins() {
@@ -100,6 +107,8 @@ export class Player {
       lat: lat,
       lng: lng,
     });
+    this.path.addLatLng(this.position);
+    this.history.push(this.position);
     this.marker.setLatLng(this.position);
     this.map.setView(this.position);
     Board.getInstance().drawPits(this.position, this.map);
