@@ -36,8 +36,12 @@ export class Board {
     this.curCell = null;
   }
 
+  private static getKey(i: number, j: number): string {
+    return [i, j].toString();
+  }
+
   private getCanonicalCell(i: number, j: number): Cell {
-    const key = [i, j].toString();
+    const key = Board.getKey(i, j);
 
     if (!this.knownCells.has(key)) {
       this.knownCells.set(key, this.buildCell(i, j));
@@ -47,15 +51,34 @@ export class Board {
   }
 
   private buildCell(i: number, j: number): Cell {
-    if (luck([i, j].toString()) > PIT_SPAWN_PROBABILITY) {
+    if (luck(Board.getKey(i, j)) > PIT_SPAWN_PROBABILITY) {
       return { i: i, j: j, pit: null, popup: null };
     }
-    const value = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
+
+    const save = localStorage.getItem(Board.getKey(i, j));
+
+    if (save !== null) {
+      const coinsStrs = JSON.parse(save) as string[];
+      const coins: GeoCoin[] = [];
+      coinsStrs.forEach((coinStr) => coins.push(GeoCoin.parseString(coinStr)));
+      return { i: i, j: j, pit: coins, popup: null };
+    }
+
+    const value = Math.floor(luck(Board.getKey(i, j)) * 100);
     const pit: GeoCoin[] = [];
     for (let g = 0; g < value; g++) {
       pit.push(new GeoCoin(i, j, g));
     }
     return { i: i, j: j, pit: pit, popup: null };
+  }
+
+  saveCell(i: number, j: number) {
+    const cell: Cell = this.getCanonicalCell(i, j);
+    const save: string[] = [];
+    cell.pit!.forEach((coin) => {
+      save.push(coin.toString());
+    });
+    localStorage.setItem(Board.getKey(i, j), JSON.stringify(save));
   }
 
   getCellForPoint(point: leaflet.LatLng): Cell {
@@ -113,16 +136,20 @@ export class Board {
         }". It has <span id="value">${
           cell.pit?.length ?? 0
         }</span> coins.</div>`;
-        
+
         if (cell.pit !== null) {
           cell.pit.forEach((coin) => {
             const button = document.createElement("button");
             button.innerHTML = coin.toString();
             button.addEventListener("click", () => {
               Player.getInstance().addCoin(coin);
+              Player.getInstance().saveCoins();
               cell.pit!.splice(cell.pit!.indexOf(coin), 1);
               button.style.display = "none";
-              cell.popup!.querySelector<HTMLSpanElement>("#value")!.innerHTML = `${cell.pit!.length}`;
+              cell.popup!.querySelector<HTMLSpanElement>(
+                "#value"
+              )!.innerHTML = `${cell.pit!.length}`;
+              Board.getInstance().saveCell(cell.i, cell.j);
             });
             cell.popup!.append(button);
           });

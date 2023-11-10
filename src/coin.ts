@@ -12,4 +12,14 @@ export class GeoCoin {
   toString(): string {
     return `${this.i}:${this.j}#${this.id}`;
   }
+
+  static parseString(str: string): GeoCoin {
+    const tokens = str.split("#");
+    const coords = tokens[0].split(":");
+    return new GeoCoin(
+      parseInt(coords[0]),
+      parseInt(coords[1]),
+      parseInt(tokens[1])
+    );
+  }
 }

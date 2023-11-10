@@ -56,7 +56,11 @@ document.getElementById("east")?.addEventListener("click", () => {
   board.drawPits(player.position, map);
 });
 document.getElementById("west")?.addEventListener("click", () => {
-  Player.instance.position.lng -= Board.getInstance().tileWidth;
-  Player.instance.marker.setLatLng(Player.instance.position);
-  Board.instance.drawPits(Player.instance.position, map);
+  player.position.lng -= board.tileWidth;
+  player.marker.setLatLng(player.position);
+  board.drawPits(player.position, map);
+});
+document.getElementById("reset")?.addEventListener("click", () => {
+  localStorage.clear();
+  window.location.reload();
 });
