@@ -22,9 +22,22 @@ export class Player {
     this.map = map;
 
     this.position = startPos;
-    this.marker = leaflet.marker(startPos);
+
+    const history = this.getHistory();
+    if (history === null) {
+      this.history = [];
+      this.history.push(this.position);
+    } else {
+      this.history = history;
+      this.position = this.history[this.history.length - 1];
+    }
+    this.path = leaflet.polyline(this.history, { color: "red" }).addTo(this.map);
+
+    this.marker = leaflet.marker(this.position);
     this.marker.bindTooltip("That's you!");
     this.marker.addTo(map);
+
+    this.map.setView(this.position);
 
     this.coins = [];
     const save = localStorage.getItem("player");
@@ -39,10 +52,6 @@ export class Player {
     this.statusPanel.style.maxHeight = "150px";
     this.statusPanel.style.overflow = "auto";
     this.updateStatusPanel();
-
-    this.history = [];
-    this.history.push(this.position);
-    this.path = leaflet.polyline(this.history, { color: "red" }).addTo(this.map);
   }
 
   saveCoins() {
@@ -109,8 +118,38 @@ export class Player {
     });
     this.path.addLatLng(this.position);
     this.history.push(this.position);
+    this.saveHistory();
     this.marker.setLatLng(this.position);
     this.map.setView(this.position);
     Board.getInstance().drawPits(this.position, this.map);
+  }
+
+  saveHistory() {
+    const historyStrs: string[] = [];
+    this.history.forEach(coord => {
+      historyStrs.push(`${coord.lat}:${coord.lng}`);
+    });
+    localStorage.setItem("history", JSON.stringify(historyStrs));
+  }
+
+  getHistory(): leaflet.LatLng[] | null {
+    const save = localStorage.getItem("history");
+
+    if (save === null) {
+      return null;
+    }
+
+    const historyStrs: string[] = JSON.parse(save) as string[];
+    const history: leaflet.LatLng[] = [];
+    historyStrs.forEach(str => {
+      history.push(Player.parseCoord(str));
+    });
+
+    return history;
+  }
+
+  static parseCoord(str: string): leaflet.LatLng {
+    const tokens = str.split(":");
+    return leaflet.latLng({ lat: parseFloat(tokens[0]), lng: parseFloat(tokens[1]) });
   }
 }
