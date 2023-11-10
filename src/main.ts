@@ -41,28 +41,16 @@ const board = new Board(TILE_DEGREES, NEIGHBORHOOD_SIZE);
 board.drawPits(player.position, map);
 
 document.getElementById("north")?.addEventListener("click", () => {
-  player.position.lat += board.tileWidth;
-  player.marker.setLatLng(player.position);
-  board.drawPits(player.position, map);
-  map.setView(player.position);
+  player.updatePosition(player.position.lat + board.tileWidth, player.position.lng);
 });
 document.getElementById("south")?.addEventListener("click", () => {
-  player.position.lat -= board.tileWidth;
-  player.marker.setLatLng(player.position);
-  board.drawPits(player.position, map);
-  map.setView(player.position);
+  player.updatePosition(player.position.lat - board.tileWidth, player.position.lng);
 });
 document.getElementById("east")?.addEventListener("click", () => {
-  player.position.lng += board.tileWidth;
-  player.marker.setLatLng(player.position);
-  board.drawPits(player.position, map);
-  map.setView(player.position);
+  player.updatePosition(player.position.lat , player.position.lng + board.tileWidth);
 });
 document.getElementById("west")?.addEventListener("click", () => {
-  player.position.lng -= board.tileWidth;
-  player.marker.setLatLng(player.position);
-  board.drawPits(player.position, map);
-  map.setView(player.position);
+  player.updatePosition(player.position.lat , player.position.lng - board.tileWidth);
 });
 document.getElementById("reset")?.addEventListener("click", () => {
   if (window.prompt("Do you want to reset? (yes/no)") !== "yes") return;
@@ -73,9 +61,6 @@ document.getElementById("reset")?.addEventListener("click", () => {
 const sensorButton = document.querySelector("#sensor")!;
 sensorButton.addEventListener("click", () => {
     navigator.geolocation.watchPosition((position) => {
-      player.position = leaflet.latLng(position.coords.latitude, position.coords.longitude);
-      player.marker.setLatLng(player.position);
-      map.setView(player.position);
-      board.drawPits(player.position, map);
+      player.updatePosition(position.coords.latitude , position.coords.longitude);
     });
 });

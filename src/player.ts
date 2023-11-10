@@ -94,4 +94,14 @@ export class Player {
     this.coins.push(coin);
     this.updateStatusPanel();
   }
+
+  updatePosition(lat: number, lng: number) {
+    this.position = leaflet.latLng({
+      lat: lat,
+      lng: lng,
+    });
+    this.marker.setLatLng(this.position);
+    this.map.setView(this.position);
+    Board.getInstance().drawPits(this.position, this.map);
+  }
 }
